@@ -39,3 +39,4 @@ secrets*
 
 # Gemini & Agent internal files
 .gemini/
+.env
