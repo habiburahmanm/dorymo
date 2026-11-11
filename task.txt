@@ -1,0 +1,41 @@
+Act as an Elite Product Architect and Lead UI/UX System Designer. Execute the following Agentic State Graph to design and implement a production-grade, highly scalable frontend interface for a unified multi-service ecosystem (combining digital freelancing, on-demand doorstep home repairs, and peer-to-peer/platform equipment & tool rental):
+
+[DESIGN PHILOSOPHY & SYSTEM CONSTRAINTS]
+- Aesthetics: Strictly minimalist, inspired by 21st.dev and modern shadcn/ui design patterns. Neutral/monochromatic surfaces, subtle border hierarchy (border-border/muted), high-contrast accessible typography, zero visual bloat, and fluid micro-interactions.
+- Zero Synthetic / Hallucinated Profiles: The system MUST NOT auto-generate or hardcode mock provider data. Every provider and consumer must have their own self-serve portal for registration, onboarding, and updating their profile/inventory.
+
+[GRAPH DEFINITION]
+- State: {user_archetypes, intent_routing, provider_portal, consumer_account, interaction_ux, hybrid_checkout, design_tokens, ui_wireframe, console_health, verification_status}
+
+- Nodes:
+  1. Intent_Router_Node:
+     Architecture an ultra-clean, minimalist dashboard segmenting three core intents with low cognitive load: (a) Digital Gig Services, (b) Local Home Emergency/Repairs, (c) Equipment & Tool Rental/Lease.
+
+  2. User_Lifecycle_Node (Self-Serve Dual Portals):
+     - Provider Onboarding & Management: Self-serve interface for identity verification (KYC), manual service listing creation, dynamic hourly/job rate definition, availability scheduling, and tool/equipment rental inventory management (with condition photos and deposit requirements). No auto-injected provider profiles.
+     - Consumer Account Center: Self-serve profile customization, multi-address management, dynamic payment preferences, real-time booking tracking, and dispute management.
+
+  3. Interaction_UX_Node:
+     Design clean search architecture with dynamic facet filtering, contextual location-based service radiuses, real-time booking slots, and interactive pickup/drop-off logistics for rented equipment.
+
+  4. Hybrid_Checkout_Node:
+     Build a split-flow checkout UI handling mixed-cart scenarios (e.g., booking a repair technician while renting specialized tools with a security deposit escrow hold).
+
+  5. Design_System_Node:
+     Establish the 21st.dev-inspired design tokens: strict spacing scales, neutral zinc/slate palette with a single high-impact accent, component primitives (cards, drawers, modals, command palettes), and responsive constraints.
+
+  6. UI_Compiler_Node:
+     Synthesize all nodes into a comprehensive frontend architecture, screen-by-screen component hierarchy, and production-ready wireframe specifications.
+
+- Control Flow & Quality Gate:
+  Start -> Intent_Router_Node -> User_Lifecycle_Node -> Interaction_UX_Node -> Hybrid_Checkout_Node -> Design_System_Node -> UI_Compiler_Node -> End.
+
+[EXECUTION PROTOCOL & SUBAGENTS]
+- For each node, deploy parallel subagents specializing in: (a) Styling/Minimalist UI, (b) Data Security & Auth Rules, (c) Performance & Edge Cases.
+- After completing each node:
+  1. Render/build the layout.
+  2. Take a browser screenshot and visually verify alignment, visual hierarchy, and spacing against 21st.dev standards.
+  3. Inspect Chrome DevTools console for zero errors/warnings.
+  4. Ensure a minimum 95% confidence score before advancing to the next node.
+- Pause and prompt me with clarifying questions whenever critical architectural choices arise.
+- Terminate the run once the final compiled blueprint passes all verification checks.
