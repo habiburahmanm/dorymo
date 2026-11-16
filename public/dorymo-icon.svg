@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="dorymo app icon">
+  <defs>
+    <path id="tick" d="M186 226 L252 300 Q268 316 286 300 L372 200" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#2F3080"/>
+
+  <!-- Flat orange D -->
+  <path d="M120 100 H220 C320 100 420 160 420 256 C420 352 320 412 220 412 H120 A30 30 0 0 1 90 382 V130 A30 30 0 0 1 120 100 Z" fill="#FF8527"/>
+  <!-- Simple flat door -->
+  <path d="M166 152 H292 Q318 152 318 178 V336 H166 Z" fill="#FFF6EE"/>
+  <circle cx="290" cy="240" r="10" fill="#FF8527"/>
+
+  <!-- Check contained inside the D -->
+  <use href="#tick" stroke="#FF8527" stroke-width="40"/>
+  <use href="#tick" stroke="#FFFFFF" stroke-width="26"/>
+</svg>

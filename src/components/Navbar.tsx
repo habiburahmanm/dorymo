@@ -1,350 +1,349 @@
 import React, { useState } from 'react';
-import { useEcosystem } from '../context/EcosystemContext';
-import { IntentCategory } from '../types';
 import {
-  Wrench,
-  Laptop,
-  Layers,
-  ShoppingBag,
-  Search,
-  Menu,
-  X,
-  Sparkles,
-  User,
-  LogOut,
+  Bell,
   Briefcase,
+  ChevronDown,
+  Image as ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageCircle,
+  Search,
+  ShieldCheck,
+  Star,
+  Wallet,
+  User,
+  X,
 } from 'lucide-react';
+import { useMaster } from '../context/MasterContext';
+import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
+import { Button } from './ui';
 
-interface NavbarProps {
-  onOpenCommand: () => void;
-}
+const ROLE_LABEL: Record<string, string> = {
+  customer: 'গ্রাহক',
+  provider: 'প্রোভাইডার',
+  admin: 'অ্যাডমিন',
+};
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand }) => {
+export const Navbar: React.FC = () => {
   const {
-    currentView,
-    setCurrentView,
-    currentUser,
-    activeRole,
-    openAuthGate,
-    logout,
-    activeIntent,
-    setActiveIntent,
-    setSelectedSubcategory,
-    cart,
-    tickets,
-  } = useEcosystem();
+    masterView, profile, goHome, goExplore, goHow, goPay, goProviderJobs,
+    goChat, goReviews, goAdmin, goAccount, openSignup, openAvatar,
+    notifications, unreadCount, markRead, markAllRead, realtimeConnected,
+    refreshProfile,
+  } = useMaster();
 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
-  const intents: { id: IntentCategory; label: string; icon: React.ElementType }[] = [
-    { id: 'digital_gig', label: 'Digital Gigs', icon: Laptop },
-    { id: 'home_repair', label: 'Doorstep Repairs', icon: Wrench },
-    { id: 'equipment_rental', label: 'Equipment Rental', icon: Layers },
-  ];
+  const close = () => { setMobileOpen(false); setMenuOpen(false); setNotifOpen(false); };
 
-  const totalCartCount = cart.reduce((acc, i) => acc + i.quantityOrHours, 0);
-
-  // Non-admin public counters
-  const availableBidsCount = tickets.filter(
-    (t) => t.status === 'approved_open_for_interest' || t.status === 'interest_expressed' || (t.status as string) === 'approved_for_bidding'
-  ).length;
-  const customerTicketsCount = tickets.filter(
-    (t) => t.status !== 'completed_released' && t.status !== 'admin_rejected' && (t.status as string) !== 'completed'
-  ).length;
-
-  const handleNavClick = (view: typeof currentView) => {
-    setCurrentView(view);
-    setIsMobileMenuOpen(false);
+  const doLogout = async () => {
+    await supabase.auth.signOut();
+    await refreshProfile();
+    close();
+    goHome();
   };
 
-  const handleCustomerClick = () => {
-    if (currentUser?.role === 'customer') {
-      setCurrentView('customer_portal');
-    } else {
-      openAuthGate('customer', 'customer_portal');
-    }
-    setIsMobileMenuOpen(false);
+  const DashboardIcon =
+    profile?.role === 'provider' ? Briefcase : profile?.role === 'admin' ? ShieldCheck : LayoutDashboard;
+
+  const openDashboard = () => {
+    close();
+    if (profile?.role === 'provider') goProviderJobs();
+    else if (profile?.role === 'admin') goAdmin();
+    else goAccount();
   };
 
-  const handleProviderClick = () => {
-    if (currentUser?.role === 'provider') {
-      setCurrentView('provider_portal');
-    } else {
-      openAuthGate('provider', 'provider_portal');
-    }
-    setIsMobileMenuOpen(false);
-  };
+  const navLink = (active: boolean) =>
+    cn(
+      'rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors',
+      active ? 'bg-white/[0.07] text-white' : 'text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-100'
+    );
 
-  const handleRoleSwitch = (role: 'customer' | 'provider') => {
-    if (currentUser?.role === role) {
-      if (role === 'provider') setCurrentView('provider_portal');
-      else setCurrentView('customer_portal');
-    } else {
-      openAuthGate(role, role === 'provider' ? 'provider_portal' : 'customer_portal');
-    }
-  };
-
-  const handleCategoryClick = (categoryId: IntentCategory) => {
-    setActiveIntent(categoryId);
-    setSelectedSubcategory(null);
-    setCurrentView('service_finder');
-    setIsMobileMenuOpen(false);
-  };
+  const notifPanel = (
+    <>
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+        <div>
+          <p className="text-[13px] font-semibold text-white">নোটিফিকেশন · Alerts</p>
+          <p className="text-[10px] text-zinc-500">
+            {realtimeConnected ? '● Live · instant updates' : '○ Reconnecting…'}
+          </p>
+        </div>
+        {unreadCount > 0 && (
+          <button onClick={() => void markAllRead()} className="text-[11px] text-orange-400 hover:underline">
+            Mark all read
+          </button>
+        )}
+      </div>
+      <div className="max-h-80 overflow-y-auto">
+        {notifications.length === 0 ? (
+          <p className="px-4 py-8 text-center text-[12px] text-zinc-500">কোনো নোটিফিকেশন নেই।</p>
+        ) : (
+          notifications.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => {
+                void markRead(n.id);
+                close();
+                if (n.link) window.location.hash = n.link;
+              }}
+              className={cn(
+                'flex w-full gap-2.5 border-b border-white/[0.04] px-4 py-3 text-left transition-colors hover:bg-white/[0.03]',
+                n.is_read ? 'opacity-60' : 'bg-orange-500/[0.04]'
+              )}
+            >
+              <span className={cn('mt-1 h-1.5 w-1.5 shrink-0 rounded-full', n.is_read ? 'bg-zinc-600' : 'bg-orange-400')} />
+              <span className="min-w-0">
+                <span className="block text-[12.5px] font-medium text-white">{n.title}</span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-zinc-400">{n.body}</span>
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </>
+  );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#09090b]/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
-        {/* Brand & Intent Tag */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleNavClick('intent_router')}
-            className="group flex items-center gap-2.5 text-left focus:outline-none"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-md border border-white/15 bg-zinc-900 transition-colors group-hover:border-orange-500/50">
-              <span className="font-mono text-sm font-bold tracking-tighter text-orange-500">N</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-mono text-sm font-semibold tracking-tight text-white">NexServe</span>
-              <span className="hidden sm:inline font-mono text-[9px] uppercase tracking-wider text-orange-400">
-                Triage Graph
-              </span>
-            </div>
+    <header className="sticky top-0 z-40 w-full border-b border-white/[0.07] bg-[#09090b]/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
+        {/* Brand */}
+        <button onClick={() => { close(); goHome(); }} className="group flex shrink-0 items-center gap-2.5" aria-label="dorymo home">
+          <img
+            src={`${import.meta.env.BASE_URL}dorymo-icon.svg`}
+            alt="dorymo"
+            className="h-9 w-9 rounded-xl transition-transform group-hover:scale-105"
+          />
+          <span className="hidden text-[18px] font-bold tracking-tight text-white sm:block">dorymo</span>
+        </button>
+
+        {/* Desktop nav */}
+        <nav className="ml-2 hidden items-center gap-0.5 lg:flex">
+          <button onClick={() => { close(); goExplore(); }} className={navLink(masterView === 'explore')}>
+            সেবা খুঁজুন
           </button>
-
-          <div className="hidden h-4 w-px bg-white/10 md:block" />
-
-          {/* Functional Intent Category Switcher Pills */}
-          <div className="hidden items-center rounded-lg border border-white/10 bg-zinc-950 p-0.5 md:flex">
-            {intents.map((item) => {
-              const Icon = item.icon;
-              const isCategoryActive = activeIntent === item.id && currentView === 'service_finder';
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleCategoryClick(item.id)}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all',
-                    isCategoryActive
-                      ? 'border border-orange-500/50 bg-orange-500/10 text-orange-400 shadow-sm'
-                      : 'border border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-                  )}
-                >
-                  <Icon className={cn('h-3.5 w-3.5', isCategoryActive ? 'text-orange-400' : 'text-zinc-500')} />
-                  <span>{item.label}</span>
+          <button onClick={() => { close(); goHow(); }} className={navLink(masterView === 'how_it_works')}>
+            কীভাবে কাজ করে
+          </button>
+          {profile?.role === 'provider' && (
+            <button onClick={() => { close(); goProviderJobs(); }} className={navLink(masterView === 'provider_jobs')}>
+              কাজ · Jobs
+            </button>
+          )}
+          {profile && (
+            <>
+              {profile.role === 'customer' && (
+                <button onClick={() => { close(); goAccount(); }} className={navLink(masterView === 'customer_dashboard')}>
+                  অ্যাকাউন্ট · Account
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Global Search / Command Trigger */}
-        <div className="flex items-center">
+              )}
+              <button onClick={() => { close(); goChat(); }} className={navLink(masterView === 'chat')}>
+                মেসেজ · Chat
+              </button>
+              <button onClick={() => { close(); goReviews(); }} className={navLink(masterView === 'reviews')}>
+                রিভিউ · Reviews
+              </button>
+            </>
+          )}
           <button
-            onClick={onOpenCommand}
-            className="flex items-center gap-2 rounded-md border border-white/10 bg-zinc-900/60 px-2.5 sm:px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-200"
+            onClick={() => { close(); goPay(); }}
+            className="rounded-lg px-3 py-2 text-[13.5px] font-medium text-orange-300 transition-colors hover:bg-orange-500/10"
           >
-            <Search className="h-3.5 w-3.5 text-orange-400" />
-            <span className="hidden sm:inline">Search Services, Tools, Gigs...</span>
-            <span className="inline sm:hidden font-medium">Search</span>
-            <kbd className="rounded border border-white/10 bg-zinc-950 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400">
-              ⌘K
-            </kbd>
+            বুক করুন · Pay
           </button>
-        </div>
-
-        {/* Action Controls & Navigation Views */}
-        <div className="flex items-center gap-2.5">
-          {/* Main Navigation Views (Explore, Customer, Provider) */}
-          <nav className="hidden lg:flex items-center gap-1 text-xs">
+          {profile?.role === 'admin' && (
             <button
-              onClick={() => setCurrentView('service_finder')}
-              className={cn(
-                'rounded-md px-2.5 py-1.5 font-medium transition-colors',
-                currentView === 'service_finder' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'
-              )}
+              onClick={() => { close(); goAdmin(); }}
+              className="rounded-lg px-3 py-2 text-[13.5px] font-medium text-emerald-300 transition-colors hover:bg-emerald-500/10"
             >
-              Explore
+              Founder Console
             </button>
+          )}
+        </nav>
 
-            {/* Customer Portal */}
-            <button
-              onClick={handleCustomerClick}
-              className={cn(
-                'relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium transition-colors',
-                currentView === 'customer_portal' || currentView === 'consumer_account'
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              )}
-            >
-              <span>Customer</span>
-              {customerTicketsCount > 0 && (
-                <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-zinc-800 border border-white/10 text-[9px] font-mono text-zinc-300">
-                  {customerTicketsCount}
-                </span>
-              )}
-            </button>
+        <div className="flex-1" />
 
-            {/* Provider Studio */}
-            <button
-              onClick={handleProviderClick}
-              className={cn(
-                'relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-medium transition-colors',
-                currentView === 'provider_portal' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200'
-              )}
-            >
-              <span>Provider</span>
-              {availableBidsCount > 0 && (
-                <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-orange-500/20 text-[9px] font-mono font-bold text-orange-400 border border-orange-500/30">
-                  {availableBidsCount}
-                </span>
-              )}
-            </button>
-          </nav>
-
-          {/* User Account / Role Pill */}
-          {currentUser ? (
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-zinc-950 px-2 py-1 text-xs">
-                {currentUser.avatar ? (
-                  <img src={currentUser.avatar} alt={currentUser.name} className="h-4 w-4 rounded-full object-cover" />
-                ) : (
-                  <User className="h-3 w-3 text-orange-400" />
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-2 md:flex">
+          {profile && (
+            <div className="relative">
+              <button
+                onClick={() => setNotifOpen((v) => !v)}
+                aria-label="Notifications"
+                className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 text-zinc-300 hover:border-white/20"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
+                    {unreadCount}
+                  </span>
                 )}
-                <span className="hidden sm:inline font-medium text-white max-w-[90px] truncate">{currentUser.name}</span>
-                <span className="rounded bg-orange-500/20 px-1 py-0.5 text-[9px] font-mono font-bold uppercase text-orange-400">
-                  {currentUser.role}
-                </span>
-              </div>
-              <button
-                onClick={() => logout()}
-                className="rounded-md border border-white/10 bg-zinc-900 p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-                title="Sign Out"
-              >
-                <LogOut className="h-3.5 w-3.5" />
+                <span className={cn('absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full', realtimeConnected ? 'bg-emerald-400' : 'bg-zinc-600')} />
               </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => openAuthGate('customer', 'customer_portal')}
-                className="hidden sm:inline-flex rounded-md border border-white/10 bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white hover:border-white/20 transition-all"
-              >
-                Customer Login
-              </button>
-              <button
-                onClick={() => openAuthGate('provider', 'provider_portal')}
-                className="flex items-center gap-1 rounded-md bg-orange-500 px-2.5 py-1 text-xs font-semibold text-black hover:bg-orange-400 transition-all shadow-sm shadow-orange-500/20"
-              >
-                <Briefcase className="h-3 w-3" />
-                <span>Provider Login</span>
-              </button>
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 z-20 mt-2 w-80 animate-fade-in overflow-hidden rounded-xl border border-white/10 bg-[#111114] shadow-2xl">
+                    {notifPanel}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
-          {/* Mixed Cart Trigger */}
-          <button
-            onClick={() => handleNavClick('hybrid_checkout')}
-            className={cn(
-              'relative flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all',
-              currentView === 'hybrid_checkout'
-                ? 'border-orange-500/60 bg-orange-500/10 text-orange-400'
-                : 'border-white/10 bg-zinc-900 text-zinc-300 hover:border-white/20'
-            )}
-          >
-            <ShoppingBag className="h-3.5 w-3.5 text-orange-500" />
-            <span className="hidden sm:inline">Checkout</span>
-            {totalCartCount > 0 && (
-              <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-black">
-                {totalCartCount}
-              </span>
-            )}
-          </button>
+          {profile ? (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-zinc-900/60 pl-1.5 pr-2.5 hover:border-white/20"
+              >
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-6 w-6 rounded-md object-cover" />
+                ) : (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-orange-500/15 text-[11px] font-bold text-orange-400">
+                    {profile.full_name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <span className="max-w-[92px] truncate text-[13px] font-medium text-zinc-200">{profile.full_name}</span>
+                <ChevronDown className={cn('h-3.5 w-3.5 text-zinc-500 transition-transform', menuOpen && 'rotate-180')} />
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 z-20 mt-2 w-56 animate-fade-in overflow-hidden rounded-xl border border-white/10 bg-[#111114] shadow-2xl">
+                    <div className="border-b border-white/[0.06] px-4 py-3">
+                      <p className="truncate text-[13px] font-semibold text-white">{profile.full_name}</p>
+                      <p className="truncate text-[11.5px] text-zinc-500">{profile.email}</p>
+                      <span className="mt-1.5 inline-flex rounded-md bg-orange-500/12 px-1.5 py-0.5 text-[10.5px] font-medium text-orange-300">
+                        {ROLE_LABEL[profile.role] || profile.role}
+                      </span>
+                    </div>
+                    <div className="p-1.5">
+                      <button
+                        onClick={() => { setMenuOpen(false); openAvatar(); }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-zinc-300 hover:bg-white/5 hover:text-white"
+                      >
+                        {profile.avatar_url ? (
+                          <img src={profile.avatar_url} alt="" className="h-4 w-4 rounded object-cover" />
+                        ) : (
+                          <LayoutDashboard className="h-4 w-4 text-zinc-500" />
+                        )}
+                        ছবি বদলান · Photo
+                      </button>
+                      <button onClick={openDashboard} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-zinc-300 hover:bg-white/5 hover:text-white">
+                        <DashboardIcon className="h-4 w-4 text-zinc-500" /> আমার ড্যাশবোর্ড
+                      </button>
+                      <button onClick={() => { close(); goHome(); }} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-zinc-300 hover:bg-white/5 hover:text-white">
+                        <Search className="h-4 w-4 text-zinc-500" /> হোমপেজে যান
+                      </button>
+                      <button onClick={() => void doLogout()} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-red-400 hover:bg-red-500/10">
+                        <LogOut className="h-4 w-4" /> লগআউট
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button onClick={openSignup} className="h-9 rounded-lg px-3 text-[13px] font-medium text-zinc-300 hover:text-white">লগইন</button>
+              <Button size="sm" onClick={openSignup}>শুরু করুন</Button>
+            </div>
+          )}
+        </div>
 
-          {/* Mobile Menu Hamburger */}
-          <button
-            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-            className="flex lg:hidden items-center justify-center rounded-md border border-white/10 bg-zinc-900 p-1.5 text-zinc-400 hover:text-white"
-            aria-label="Toggle navigation menu"
-          >
-            {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        {/* Mobile actions */}
+        <div className="flex items-center gap-2 md:hidden">
+          {profile && (
+            <button onClick={() => setNotifOpen((v) => !v)} aria-label="Notifications" className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 text-zinc-300">
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-orange-500 px-0.5 text-[9px] font-bold text-black">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+          <button onClick={() => { close(); goPay(); }} aria-label="Pay" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 text-zinc-300">
+            <Wallet className="h-4 w-4" />
+          </button>
+          <button onClick={() => setMobileOpen((v) => !v)} aria-label="Menu" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-900/60 text-zinc-300">
+            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-white/10 bg-zinc-950 px-4 py-3 space-y-3 animate-in slide-in-from-top-2 duration-150">
-          {/* Mobile Category Quick Links */}
-          <div className="text-[10px] font-mono uppercase text-zinc-500 tracking-wider">
-            Categories
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 text-xs">
-            {intents.map((item) => {
-              const Icon = item.icon;
-              const isCategoryActive = activeIntent === item.id && currentView === 'service_finder';
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleCategoryClick(item.id)}
-                  className={cn(
-                    'flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition-all',
-                    isCategoryActive
-                      ? 'border border-orange-500/50 bg-orange-500/10 text-orange-400'
-                      : 'border border-white/5 bg-zinc-900 text-zinc-400'
-                  )}
-                >
-                  <Icon className="h-3 w-3" />
-                  <span>{item.label.split(' ')[0]}</span>
-                </button>
-              );
-            })}
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="animate-fade-in border-t border-white/[0.07] bg-[#0c0c0f] px-4 py-4 md:hidden">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-600">সেবা</p>
+          <div className="grid grid-cols-1 gap-1">
+            <button onClick={() => { close(); goExplore(); }} className="rounded-lg bg-white/[0.04] px-3 py-2.5 text-left text-sm font-medium text-zinc-200">সেবা খুঁজুন</button>
+            <button onClick={() => { close(); goHow(); }} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-zinc-400">কীভাবে কাজ করে</button>
+            {profile?.role === 'provider' && (
+              <button onClick={() => { close(); goProviderJobs(); }} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-emerald-300">কাজ · Jobs</button>
+            )}
+            {profile && (
+              <>
+                {profile.role === 'customer' && (
+                  <button onClick={() => { close(); goAccount(); }} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-orange-300"><User className="h-4 w-4" /> অ্যাকাউন্ট · Account</button>
+                )}
+                <button onClick={() => { close(); goChat(); }} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-zinc-400"><MessageCircle className="h-4 w-4" /> মেসেজ · Chat</button>
+                <button onClick={() => { close(); goReviews(); }} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-zinc-400"><Star className="h-4 w-4" /> রিভিউ · Reviews</button>
+              </>
+            )}
+            {profile?.role === 'admin' && (
+              <button onClick={() => { close(); goAdmin(); }} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-emerald-300">Founder Console</button>
+            )}
           </div>
 
-          <div className="border-t border-white/5 pt-2 text-[10px] font-mono uppercase text-zinc-500 tracking-wider">
-            Portals & Views
+          <div className="mt-4 border-t border-white/[0.06] pt-4">
+            {profile ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 rounded-lg bg-white/[0.04] px-3 py-2.5">
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500/15 text-sm font-bold text-orange-400">
+                      {profile.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">{profile.full_name}</p>
+                    <p className="truncate text-[11.5px] text-zinc-500">{profile.email}</p>
+                  </div>
+                </div>
+                <button onClick={() => { close(); openAvatar(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-zinc-200">
+                  <ImageIcon className="h-4 w-4" /> ছবি বদলান · Photo
+                </button>
+                <button onClick={openDashboard} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-zinc-200">
+                  <DashboardIcon className="h-4 w-4" /> আমার ড্যাশবোর্ড
+                </button>
+                <button onClick={() => void doLogout()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-red-400">
+                  <LogOut className="h-4 w-4" /> লগআউট
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" fullWidth onClick={() => { close(); openSignup(); }}>লগইন</Button>
+                <Button fullWidth onClick={() => { close(); openSignup(); }}>প্রোভাইডার</Button>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-1 gap-1 text-xs">
-            <button
-              onClick={() => handleNavClick('service_finder')}
-              className={cn(
-                'rounded-md px-3 py-2 text-left font-medium transition-colors',
-                currentView === 'service_finder' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
-              )}
-            >
-              Explore Catalog Hub
-            </button>
-            <button
-              onClick={handleCustomerClick}
-              className={cn(
-                'flex items-center justify-between rounded-md px-3 py-2 text-left font-medium transition-colors',
-                currentView === 'customer_portal' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
-              )}
-            >
-              <span>Customer Portal</span>
-              {customerTicketsCount > 0 && (
-                <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-300 font-mono">
-                  {customerTicketsCount} active
-                </span>
-              )}
-            </button>
-            <button
-              onClick={handleProviderClick}
-              className={cn(
-                'flex items-center justify-between rounded-md px-3 py-2 text-left font-medium transition-colors',
-                currentView === 'provider_portal' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
-              )}
-            >
-              <span>Provider Studio</span>
-              {availableBidsCount > 0 && (
-                <span className="rounded bg-orange-500/20 px-1.5 py-0.5 text-[10px] text-orange-400 font-mono font-bold">
-                  {availableBidsCount} open
-                </span>
-              )}
-            </button>
-          </div>
+        </div>
+      )}
+
+      {/* Mobile notification panel */}
+      {notifOpen && profile && (
+        <div className="absolute right-2 top-16 z-50 w-[calc(100%-1rem)] max-w-sm animate-fade-in overflow-hidden rounded-xl border border-white/10 bg-[#111114] shadow-2xl md:hidden">
+          {notifPanel}
         </div>
       )}
     </header>
   );
 };
+
+export default Navbar;

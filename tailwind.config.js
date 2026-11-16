@@ -5,6 +5,20 @@ export default {
   theme: {
     extend: {
       colors: {
+        /* dorymo brand palette */
+        dory: {
+          indigo: '#2F3080',
+          orange: '#FF8527',
+          teal: '#199698',
+          cream: '#F5F2E9',
+        },
+        orange: {
+          300: '#FFC49E',
+          400: '#FFA866',
+          500: '#FF8527',
+          600: '#EA6E16',
+          700: '#C45710',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -30,20 +44,28 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        orange: {
-          accent: '#F97316',
-          hover: '#EA580C',
-          muted: 'rgba(249, 115, 22, 0.12)',
-        },
       },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'calc(var(--radius) - 3px)',
+        sm: 'calc(var(--radius) - 6px)',
       },
       fontFamily: {
-        sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans: ['Hind Siliguri', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Noto Serif Bengali', 'Hind Siliguri', 'serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+      keyframes: {
+        'slide-up': {
+          from: { opacity: '0', transform: 'translateY(16px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'slide-up': 'slide-up 0.4s cubic-bezier(0.22,1,0.36,1) both',
+      },
+      screens: {
+        xs: '420px',
       },
     },
   },

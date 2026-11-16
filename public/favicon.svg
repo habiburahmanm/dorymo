@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64" role="img" aria-label="dorymo">
+  <defs>
+    <path id="tick" d="M198 245 L260 310 Q274 322 290 310 L470 108" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#2F3080"/>
+  <path d="M120 100 H220 C320 100 420 160 420 256 C420 352 320 412 220 412 H120 A30 30 0 0 1 90 382 V130 A30 30 0 0 1 120 100 Z" fill="#FF8527"/>
+  <path d="M160 160 L240 205 L240 340 L160 305 Z" fill="#F96A1C"/>
+  <path d="M240 205 H320 Q348 205 348 232 V310 L285 340 L240 318 Z" fill="#FFF6EE"/>
+  <ellipse cx="190" cy="245" rx="8" ry="15" fill="#FFFFFF"/>
+  <use href="#tick" stroke="#FF8527" stroke-width="40"/>
+  <use href="#tick" stroke="#FFFFFF" stroke-width="26"/>
+</svg>

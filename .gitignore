@@ -40,3 +40,12 @@ secrets*
 # Gemini & Agent internal files
 .gemini/
 .env
+
+# Capacitor generated build outputs (keep native source projects committed)
+android/.gradle/
+android/local.properties
+android/app/build/
+android/app/src/main/assets/public/
+ios/App/Pods/
+ios/App/DerivedData/
+ios/App/App/public/

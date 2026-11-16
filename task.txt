@@ -1,3 +1,5 @@
+[ARCHIVED v1 BRIEF — the app built from this has been retired. See MASTER_PROMPT.md for the current product brief.]
+
 Act as an Elite Product Architect and Lead UI/UX System Designer. Execute the following Agentic State Graph to design and implement a production-grade, highly scalable frontend interface for a unified multi-service ecosystem (combining digital freelancing, on-demand doorstep home repairs, and peer-to-peer/platform equipment & tool rental):
 
 [DESIGN PHILOSOPHY & SYSTEM CONSTRAINTS]

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="dorymo">
+  <title>dorymo</title>
+  <defs>
+    <!-- tick kept entirely inside the D bowl -->
+    <path id="tick" d="M150 178 L200 236 Q211 246 224 236 L306 132" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </defs>
+
+  <!-- Flat orange D -->
+  <path d="M94 58 H182 C270 58 358 112 358 175 C358 238 270 292 182 292 H94 A26 26 0 0 1 68 266 V84 A26 26 0 0 1 94 58 Z" fill="#FF8527"/>
+
+  <!-- Simple flat door (no 3D panel) -->
+  <path d="M132 112 H232 Q254 112 254 134 V252 H132 Z" fill="#FFF6EE"/>
+  <circle cx="220" cy="182" r="7" fill="#FF8527"/>
+
+  <!-- Check: white with orange outline, fully inside the D -->
+  <use href="#tick" stroke="#FF8527" stroke-width="32"/>
+  <use href="#tick" stroke="#FFFFFF" stroke-width="20"/>
+
+  <!-- Wordmark -->
+  <text x="440" y="222" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="180" font-weight="800" letter-spacing="-3" fill="#2F3080">dorymo</text>
+</svg>

@@ -1,23 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
+/** .env-এ প্রকৃত Supabase ক্রেডেনশিয়াল বসানো আছে কি না */
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl && 
-  supabaseAnonKey && 
-  !supabaseUrl.includes('your-supabase-project')
+  supabaseUrl &&
+    supabaseAnonKey &&
+    /^https?:\/\/.+\.supabase\.co/.test(supabaseUrl) &&
+    !supabaseUrl.includes('your-supabase-project')
 );
 
-// Fallback placeholder URL for type safety during initial configuration
 const safeUrl = isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co';
-const safeAnonKey = isSupabaseConfigured ? supabaseAnonKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+const safeAnonKey = isSupabaseConfigured ? supabaseAnonKey : 'placeholder-anon-key';
 
-export const supabase = createClient<Database>(safeUrl, safeAnonKey, {
+export const supabase = createClient(safeUrl, safeAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    storageKey: 'dorymo.auth',
   },
 });

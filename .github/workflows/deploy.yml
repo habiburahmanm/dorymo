@@ -33,6 +33,13 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env:
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/dorymo/' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_OWNER_BKASH_NUMBER: ${{ secrets.VITE_OWNER_BKASH_NUMBER }}
+          VITE_OWNER_NAGAD_NUMBER: ${{ secrets.VITE_OWNER_NAGAD_NUMBER }}
+          VITE_PAYMENT_EDGE_FUNCTION_URL: ${{ secrets.VITE_PAYMENT_EDGE_FUNCTION_URL }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
