@@ -49,3 +49,11 @@ android/app/src/main/assets/public/
 ios/App/Pods/
 ios/App/DerivedData/
 ios/App/App/public/
+
+# Local markdown notes
+GEMINI_HANDOFF.md
+MASTER_IMPLEMENTATION.md
+MASTER_PROMPT.md
+PUSH_SETUP.md
+gemini.md
+
