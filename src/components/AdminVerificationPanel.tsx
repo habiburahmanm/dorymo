@@ -8,7 +8,7 @@
  *
  * Everything is admin-RLS protected; a non-admin cannot even read these rows.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   BadgeCheck,
   Check,
@@ -17,14 +17,16 @@ import {
   ReceiptText,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Wallet,
   TrendingUp,
   X,
 } from 'lucide-react';
 import { useMaster } from '../context/MasterContext';
-import { formatCurrency, timeAgo } from '../lib/utils';
+import { formatCurrency, parseBkashSms, playChime, timeAgo } from '../lib/utils';
 import { Badge, Button, Card, EmptyState, Field, Modal, Toast } from './ui';
 import type { PayoutView } from '../lib/masterDb';
+import GlassFolder, { type FolderFile } from './GlassFolderCard';
 
 const Bi: React.FC<{ bn: string; en: string }> = ({ bn, en }) => (
   <span>
@@ -57,6 +59,17 @@ export const AdminVerificationPanel: React.FC = () => {
   const [payoutTrx, setPayoutTrx] = useState('');
   const [refundFor, setRefundFor] = useState<PayoutView | null>(null);
   const [refundTrx, setRefundTrx] = useState('');
+  const [smsText, setSmsText] = useState('');
+
+  const parsedSms = useMemo(() => parseBkashSms(smsText), [smsText]);
+  const matchedPayment = useMemo(() => {
+    if (!parsedSms.trxId && !parsedSms.sender) return null;
+    return pendingPayments.find((p) => {
+      if (parsedSms.trxId && p.payment.trx_id.trim().toUpperCase() === parsedSms.trxId) return true;
+      if (parsedSms.sender && p.payment.sender_number.includes(parsedSms.sender)) return true;
+      return false;
+    });
+  }, [parsedSms, pendingPayments]);
 
   const handleVerify = async (id: string, approve: boolean) => {
     setBusyId(id);
@@ -122,8 +135,132 @@ export const AdminVerificationPanel: React.FC = () => {
         ))}
       </div>
 
+      {/* Quick SMS Auto-Matcher for Solo Founder */}
+      <Card className="mt-8 border-orange-500/30 bg-gradient-to-r from-orange-950/25 via-zinc-900/60 to-zinc-900/60 p-4 sm:p-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-orange-400" />
+          <h3 className="text-[14px] font-semibold text-white">
+            SMS দ্রুত যাচাইকারী · Quick SMS Matcher (bKash / Nagad)
+          </h3>
+        </div>
+        <p className="mt-1 text-[11.5px] text-zinc-400">
+          ফোনে আসা bKash বা Nagad-এর SMS কপি করে নিচে পেস্ট করুন — সিস্টেম স্বয়ংক্রিয়ভাবে TrxID ও টাকা মিলিয়ে অনুমোদন বাটন দেখাবে।
+        </p>
+        <div className="mt-3">
+          <textarea
+            value={smsText}
+            onChange={(e) => setSmsText(e.target.value)}
+            placeholder="যেমন: You have received Tk 700.00 from 01712345678. Fee Tk 0.00. Balance... TrxID 9K38FA76B9..."
+            rows={2}
+            className="w-full rounded-xl border border-white/10 bg-zinc-950/80 p-3 text-[12.5px] text-zinc-100 placeholder:text-zinc-600 focus:border-orange-500/60 focus:outline-none"
+          />
+        </div>
+
+        {smsText.trim() && (
+          <div className="mt-3 rounded-lg border border-white/[0.08] bg-zinc-950/50 p-3">
+            {matchedPayment ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[12.5px] font-semibold text-emerald-300 flex items-center gap-1.5">
+                    <Check className="h-4 w-4 text-emerald-400" />
+                    মিল পাওয়া গেছে! অর্ডার #{matchedPayment.payment.order_id.slice(0, 8)}
+                  </p>
+                  <p className="mt-0.5 text-[11.5px] text-zinc-300">
+                    গ্রাহক: {matchedPayment.customer?.full_name || 'গ্রাহক'} · দাবি করা TrxID:{' '}
+                    <span className="font-mono text-white font-semibold">{matchedPayment.payment.trx_id}</span> · পরিমাণ:{' '}
+                    <span className="font-semibold text-orange-400">
+                      {formatCurrency(Number(matchedPayment.payment.amount))}
+                    </span>
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  loading={busyId === matchedPayment.payment.id}
+                  onClick={async () => {
+                    playChime('success');
+                    await handleVerify(matchedPayment.payment.id, true);
+                    setSmsText('');
+                  }}
+                >
+                  এক-ক্লিকে অনুমোদন করুন
+                </Button>
+              </div>
+            ) : (
+              <p className="text-[11.5px] text-amber-300">
+                নিষ্কাশিত TrxID: <span className="font-mono">{parsedSms.trxId || 'নেই'}</span> · পরিমাণ:{' '}
+                {parsedSms.amount ? `৳${parsedSms.amount}` : 'নেই'} — অপেক্ষমান তালিকার কোনো পেমেন্টের সাথে সরাসরি মিল পাওয়া যায়নি।
+              </p>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* ---------------- GLASS FOLDER CARDS (21st.dev) ---------------- */}
+      {(() => {
+        const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const mk = (id: string, label: string, count: number, files: FolderFile[]): FolderFile[] => [
+          ...files,
+        ];
+        void mk;
+        return (
+          <div className="mt-6 flex flex-wrap justify-center gap-6">
+            {/* Payments */}
+            <GlassFolder
+              label="Payments"
+              meta={`${pendingPayments.length} to verify`}
+              tone="dark"
+              art="dorymo"
+              seed={7}
+              files={pendingPayments.map((p) => ({
+                name: p.customer?.full_name || 'Customer',
+                meta: `${p.payment.method.toUpperCase()} · ${p.payment.trx_id}`,
+              }))}
+              action="more"
+              menu={[{ label: 'Go to payment queue →', onSelect: () => scrollTo('queue-payments') }]}
+              onFileSelect={() => scrollTo('queue-payments')}
+              width={300}
+              appearDelay={0}
+            />
+            {/* Providers */}
+            <GlassFolder
+              label="Providers"
+              meta={`${pendingProviders.length} to approve`}
+              tone="dark"
+              art="dorymo"
+              seed={19}
+              files={pendingProviders.map((p) => ({
+                name: p.user.full_name,
+                meta: `${p.user.service_skill || 'Skill'} · ${p.user.area || 'Nationwide'}`,
+              }))}
+              action="more"
+              menu={[{ label: 'Go to provider queue →', onSelect: () => scrollTo('queue-providers') }]}
+              onFileSelect={() => scrollTo('queue-providers')}
+              width={300}
+              appearDelay={110}
+            />
+            {/* Payouts */}
+            <GlassFolder
+              label="Payouts"
+              meta={`${payoutsDue} due · ৳${commissionEarned.toLocaleString()} earned`}
+              tone="dark"
+              art="dorymo"
+              seed={31}
+              files={payouts.filter((p) => p.status === 'pending').map((p) => ({
+                name: p.providerName || 'Provider',
+                meta: `${p.serviceTitle || p.category || 'Job'} · ৳${Number(p.payout_amount).toLocaleString()}`,
+              }))}
+              action="more"
+              menu={[{ label: 'Go to payouts →', onSelect: () => scrollTo('queue-payouts') }]}
+              onFileSelect={() => scrollTo('queue-payouts')}
+              width={300}
+              appearDelay={220}
+            />
+          </div>
+        );
+      })()}
+
       {/* ---------------- QUEUE 1: payments ---------------- */}
-      <section className="mt-8">
+      <section id="queue-payments" className="mt-8 scroll-mt-24">
         <div className="mb-3 flex items-center gap-2">
           <ReceiptText className="h-4 w-4 text-amber-400" />
           <h2 className="text-[15px] font-semibold text-white">
@@ -203,7 +340,7 @@ export const AdminVerificationPanel: React.FC = () => {
       </section>
 
       {/* ---------------- QUEUE 2: providers ---------------- */}
-      <section className="mt-9">
+      <section id="queue-providers" className="mt-9 scroll-mt-24">
         <div className="mb-3 flex items-center gap-2">
           <BadgeCheck className="h-4 w-4 text-sky-400" />
           <h2 className="text-[15px] font-semibold text-white">
@@ -275,7 +412,7 @@ export const AdminVerificationPanel: React.FC = () => {
       </section>
 
       {/* ---------------- QUEUE 3: payouts / commission ---------------- */}
-      <section className="mt-9">
+      <section id="queue-payouts" className="mt-9 scroll-mt-24">
         <div className="mb-3 flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-emerald-400" />
           <h2 className="text-[15px] font-semibold text-white">

@@ -17,7 +17,7 @@ import {
   type ChatMessage,
   type ConversationOrder,
 } from '../lib/masterDb';
-import { cn } from '../lib/utils';
+import { cn, playChime } from '../lib/utils';
 import { Badge, Button, Card, EmptyState } from './ui';
 
 const REVEAL_STATUSES = ['payment_approved', 'in_progress', 'completed'];
@@ -129,6 +129,7 @@ export const ChatPanel: React.FC = () => {
     setSending(true);
     try {
       await sendMessage(selectedId, text);
+      playChime('tap');
       setText('');
       await loadMessages(selectedId);
     } catch (err: any) {

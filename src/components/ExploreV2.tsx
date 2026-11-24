@@ -4,7 +4,19 @@
  * Real prices, real response times, REAL review ratings (no hardcoded 5 stars).
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BadgeCheck, Boxes, Clock, Laptop, MapPin, Search, ShieldCheck, Star, Wrench } from 'lucide-react';
+import {
+  ArrowRight,
+  BadgeCheck,
+  Boxes,
+  Clock,
+  Laptop,
+  MapPin,
+  Search,
+  ShieldCheck,
+  Star,
+  Wrench,
+  Zap,
+} from 'lucide-react';
 import { useMaster } from '../context/MasterContext';
 import {
   fetchProviderNames,
@@ -13,7 +25,7 @@ import {
   type Category,
   type ServiceRow,
 } from '../lib/masterDb';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, playChime } from '../lib/utils';
 import { Badge, Button, Card, EmptyState } from './ui';
 import { Reveal } from './Reveal';
 
@@ -54,6 +66,7 @@ export const ExploreV2: React.FC = () => {
   const [area, setArea] = useState('All');
   const [query, setQuery] = useState('');
   const [maxPrice, setMaxPrice] = useState(50000);
+  const [emergencyOnly, setEmergencyOnly] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -76,10 +89,11 @@ export const ExploreV2: React.FC = () => {
       // hyper-local areas only apply to physical services
       if (area !== 'All' && !s.is_nationwide && s.area !== area) return false;
       if (Number(s.price) > maxPrice) return false;
+      if (emergencyOnly && s.response_minutes > 90) return false;
       if (q && !`${s.title} ${s.description} ${providerNames[s.provider_id] || ''} ${s.area || ''}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [services, tab, area, maxPrice, query, providerNames]);
+  }, [services, tab, area, maxPrice, emergencyOnly, query, providerNames]);
 
   const book = (service: ServiceRow) => {
     if (!profile) {
@@ -100,11 +114,14 @@ export const ExploreV2: React.FC = () => {
       </div>
 
       {/* Category tabs */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              playChime('tap');
+              setTab(t.id);
+            }}
             className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[12.5px] font-medium transition-colors ${
               tab === t.id
                 ? 'border-orange-500/50 bg-orange-500/10 text-orange-300'
@@ -116,6 +133,22 @@ export const ExploreV2: React.FC = () => {
             <span className="hidden text-[10px] text-zinc-500 sm:inline">· {t.en}</span>
           </button>
         ))}
+
+        {/* Emergency toggle pill */}
+        <button
+          onClick={() => {
+            playChime('tap');
+            setEmergencyOnly(!emergencyOnly);
+          }}
+          className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[12.5px] font-medium transition-all ${
+            emergencyOnly
+              ? 'border-amber-500/60 bg-amber-500/20 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+              : 'border-amber-500/30 bg-amber-950/20 text-amber-400/80 hover:text-amber-300'
+          }`}
+        >
+          <Zap className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+          <span>⚡ জরুরি সেবা · ৯০ মিনিটে</span>
+        </button>
       </div>
 
       {/* Filters */}
@@ -177,7 +210,24 @@ export const ExploreV2: React.FC = () => {
         <Badge tone="green"><ShieldCheck className="h-3 w-3" /> NID verified providers</Badge>
       </div>
 
-      {!loading && filtered.length === 0 ? (
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <Card key={n} className="flex flex-col p-5 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-28 rounded-md skeleton-shimmer" />
+                <div className="h-5 w-12 rounded-md skeleton-shimmer" />
+              </div>
+              <div className="h-5 w-3/4 rounded-md skeleton-shimmer" />
+              <div className="h-10 w-full rounded-md skeleton-shimmer" />
+              <div className="mt-auto pt-3 flex items-center justify-between border-t border-white/[0.06]">
+                <div className="h-6 w-20 rounded-md skeleton-shimmer" />
+                <div className="h-8 w-24 rounded-lg skeleton-shimmer" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           title="এই ফিল্টারে কোনো সেবা নেই"
           description="এলাকা বা দামের সীমা বদলে আবার চেষ্টা করুন।"

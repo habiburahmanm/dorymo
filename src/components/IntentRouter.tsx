@@ -9,6 +9,7 @@ import {
   BadgeCheck,
   Users,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { useMaster } from '../context/MasterContext';
 import { fetchServices, type Category, type ServiceRow } from '../lib/masterDb';
@@ -159,6 +160,30 @@ export const IntentRouter: React.FC = () => {
                 <Button size="lg" variant="outline" onClick={goDashboard}>
                   {profile ? 'আমার ড্যাশবোর্ড' : 'অ্যাকাউন্ট খুলুন'}
                 </Button>
+              </div>
+
+              {/* জরুরি টেকনিশিয়ান শর্টকাট কার্ড */}
+              <div
+                onClick={() => goExplore('home_repair')}
+                className="mt-5 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/40 via-orange-950/20 to-zinc-950/40 p-3 sm:p-3.5 backdrop-blur-md transition-all hover:border-amber-500/60 hover:shadow-[0_0_25px_rgba(245,158,11,0.15)] group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 group-hover:scale-105 transition-transform">
+                    <Zap className="h-4 w-4 fill-amber-400 text-amber-400 animate-pulse" />
+                  </span>
+                  <div className="text-left">
+                    <p className="text-[12.5px] font-semibold text-white flex items-center gap-1.5">
+                      জরুরি মেরামত দরকার?
+                      <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[9.5px] font-bold text-amber-300">
+                        ৩০–৬০ মিনিট
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-zinc-400">
+                      বিদ্যুৎ, প্লাম্বিং বা এসির জরুরি সমস্যায় এখনই ডাকুন · Cash After Work
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-amber-400 group-hover:translate-x-1 transition-transform" />
               </div>
 
               {/* ছোট পরিসংখ্যান */}

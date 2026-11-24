@@ -30,7 +30,7 @@ import {
   type Category,
   type ServiceRow,
 } from '../lib/masterDb';
-import { formatCurrency, timeAgo } from '../lib/utils';
+import { formatCurrency, playChime, timeAgo } from '../lib/utils';
 import { Badge, Button, Card, EmptyState, Field, Modal, Select, TextArea } from './ui';
 
 const Bi: React.FC<{ bn: string; en: string }> = ({ bn, en }) => (
@@ -65,7 +65,7 @@ export const ProviderJobs: React.FC = () => {
       // The RPC only returns unassigned jobs; assigned ones are fetched directly.
       const { data } = await supabase
         .from('orders')
-        .select('id, category, amount, deposit_amount, status, created_at, service_id, customer_id')
+        .select('id, category, amount, deposit_amount, status, created_at, service_id, customer_id, address')
         .eq('provider_id', profile?.id ?? '')
         .in('status', ['in_progress', 'completed'])
         .order('created_at', { ascending: false });
@@ -87,7 +87,7 @@ export const ProviderJobs: React.FC = () => {
           title: names.get(d.service_id) || 'Job',
           amount: Number(d.amount),
           deposit_amount: Number(d.deposit_amount),
-          area: names.get(d.customer_id) || '—',
+          area: d.address || '—',
           customer_name: names.get(d.customer_id) || 'Customer',
           created_at: d.created_at,
           status: d.status,
@@ -232,7 +232,18 @@ export const ProviderJobs: React.FC = () => {
           <Inbox className="h-4 w-4 text-orange-400" /> <Bi bn="নতুন কাজ — এখনই নিন" en="Available now — grab one" />
         </h2>
         {loading ? (
-          <p className="text-[13px] text-zinc-500">লোড হচ্ছে…</p>
+          <div className="space-y-3">
+            {[1, 2].map((n) => (
+              <Card key={n} className="p-4 sm:p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-32 rounded skeleton-shimmer" />
+                  <div className="h-6 w-16 rounded skeleton-shimmer" />
+                </div>
+                <div className="h-4 w-52 rounded skeleton-shimmer" />
+                <div className="h-8 w-full rounded-lg skeleton-shimmer" />
+              </Card>
+            ))}
+          </div>
         ) : available.length === 0 ? (
           <EmptyState
             title="এখন কোনো নতুন কাজ নেই"

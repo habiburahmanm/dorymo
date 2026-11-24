@@ -15,6 +15,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AvatarModal } from './components/AvatarModal';
 import { CustomerDashboard } from './components/CustomerDashboard';
 import { ScrollProgress } from './components/ScrollProgress';
+import { BottomNav } from './components/BottomNav';
 import { useMaster } from './context/MasterContext';
 import { supabase } from './lib/supabase';
 
@@ -44,7 +45,7 @@ const Shell: React.FC = () => {
         </div>
       )}
 
-      <main className="relative flex-1">
+      <main className="relative flex-1 pb-20 md:pb-0">
         {masterView === 'manual_checkout' && <ManualCheckout />}
         {masterView === 'admin_verify' && <AdminVerificationPanel />}
         {masterView === 'explore' && <ExploreV2 />}
@@ -57,6 +58,7 @@ const Shell: React.FC = () => {
       </main>
 
       <Footer />
+      <BottomNav />
       <SignUpModal />
       <AvatarModal />
       <InstallPrompt />

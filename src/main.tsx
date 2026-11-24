@@ -1,3 +1,8 @@
+import { initDomPatcher } from './lib/domPatcher';
+
+// Protect React 19 reconciler against Google Translate / browser extensions DOM mutations
+initDomPatcher();
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';

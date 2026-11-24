@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useMaster } from '../context/MasterContext';
 import { fetchProviderNames, fetchSavedAddresses, fetchServices, type SavedAddress, type ServiceRow } from '../lib/masterDb';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, playChime } from '../lib/utils';
 import { Badge, Button, Card, Field, Select } from './ui';
 
 const OWNER_BKASH = (import.meta.env.VITE_OWNER_BKASH_NUMBER || '01700000000').trim();
@@ -96,6 +96,7 @@ export const ManualCheckout: React.FC = () => {
   const payNumber = method === 'bkash' ? OWNER_BKASH : OWNER_NAGAD;
 
   const copyNumber = async () => {
+    playChime('tap');
     try {
       await navigator.clipboard.writeText(payNumber);
       showToast('নম্বার কপি হয়েছে', 'success');
@@ -122,7 +123,10 @@ export const ManualCheckout: React.FC = () => {
       timeSlot: timeSlot || undefined,
     });
     setBusy(false);
-    if (id) setDoneOrderId(id);
+    if (id) {
+      playChime('success');
+      setDoneOrderId(id);
+    }
   };
 
   if (doneOrderId) {
@@ -170,6 +174,13 @@ export const ManualCheckout: React.FC = () => {
           সবচেয়ে কম ঝুঁকিতে সেবা পেতে নিচের ধাপগুলো অনুসরণ করুন।
         </p>
       </div>
+
+      {isAdmin && (OWNER_BKASH === '01700000000' || OWNER_NAGAD === '01900000000') && (
+        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-950/40 p-3 text-[12px] text-amber-200">
+          ⚠️ <strong>প্রতিষ্ঠাতা সতর্কবার্তা:</strong> আপনার <code>.env</code> ফাইলে{' '}
+          <code>VITE_OWNER_BKASH_NUMBER</code> বা <code>VITE_OWNER_NAGAD_NUMBER</code> সেট করা হয়নি। গ্রাহকদের কাছে ডেমো নম্বর (01700000000) প্রদর্শিত হচ্ছে।
+        </div>
+      )}
 
       {/* Trust bar — reciprocal reassurance */}
       <div className="mb-6 grid gap-2 sm:grid-cols-3">

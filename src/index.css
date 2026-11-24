@@ -192,6 +192,15 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .animate-fade-up {
   animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -200,6 +209,33 @@
 }
 .animate-slow-float {
   animation: slow-float 7s ease-in-out infinite;
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
+}
+
+/* অফিশিয়াল ভাউচার প্রিন্ট স্টাইল */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  header, footer, nav, .no-print {
+    display: none !important;
+  }
+  .printable-voucher {
+    border: 1px solid #ddd !important;
+    color: #000 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
