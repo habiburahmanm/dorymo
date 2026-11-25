@@ -1,20 +1,34 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const DEFAULT_SUPABASE_URL = 'https://itclpepebcnxwbsltuzs.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_y2dzG9RdTN-GNHMGJpZf2Q_VVD5Bhrw';
 
-/** .env-এ প্রকৃত Supabase ক্রেডেনশিয়াল বসানো আছে কি না */
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const rawAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+const isPlaceholderUrl =
+  !rawUrl ||
+  rawUrl.includes('placeholder') ||
+  rawUrl.includes('your-project-id') ||
+  rawUrl.includes('your-supabase-project');
+
+const isPlaceholderKey =
+  !rawAnonKey ||
+  rawAnonKey.includes('placeholder') ||
+  rawAnonKey.includes('your-anon-public-key');
+
+const supabaseUrl = isPlaceholderUrl ? DEFAULT_SUPABASE_URL : rawUrl;
+const supabaseAnonKey = isPlaceholderKey ? DEFAULT_SUPABASE_ANON_KEY : rawAnonKey;
+
+/** .env বা ডিফল্ট ক্রেডেনশিয়াল সক্রিয় কি না */
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
     supabaseAnonKey &&
     /^https?:\/\/.+\.supabase\.co/.test(supabaseUrl) &&
-    !supabaseUrl.includes('your-supabase-project')
+    !supabaseUrl.includes('placeholder')
 );
 
-const safeUrl = isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co';
-const safeAnonKey = isSupabaseConfigured ? supabaseAnonKey : 'placeholder-anon-key';
-
-export const supabase = createClient(safeUrl, safeAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

@@ -6,12 +6,12 @@
  * every sensitive step carries a trust reassurance line.
  * Bilingual labels throughout (Bangla primary, English secondary).
  */
-import React, { useState } from 'react';
-import { BadgeCheck, Camera, Clock, Eye, EyeOff, FileCheck2, Lock, Mail, Phone, ShieldCheck, User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { BadgeCheck, Camera, CheckCircle2, Clock, Eye, EyeOff, FileCheck2, Lock, Mail, Phone, ShieldCheck, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { captureNidPhoto, isNativeApp } from '../lib/nativeCamera';
 import { useMaster } from '../context/MasterContext';
-import type { Category } from '../lib/masterDb';
+import { fetchMyProfile, type Category } from '../lib/masterDb';
 import { cn } from '../lib/utils';
 import { Button, Field, Modal, Select } from './ui';
 
@@ -32,11 +32,22 @@ const Bi: React.FC<{ bn: string; en: string }> = ({ bn, en }) => (
 );
 
 export const SignUpModal: React.FC = () => {
-  const { signupOpen, closeSignup, signUp, showToast, refreshProfile } = useMaster();
+  const {
+    signupOpen, signupMode, closeSignup, signUp, showToast, refreshProfile,
+    goAdmin, goProviderJobs, goExplore, goHome,
+  } = useMaster();
 
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
   const [role, setRole] = useState<'customer' | 'provider'>('customer');
   const [busy, setBusy] = useState(false);
+
+  const [successInfo, setSuccessInfo] = useState<{
+    type: 'login' | 'signup';
+    email: string;
+    name?: string;
+    role?: string;
+    status?: string;
+  } | null>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,6 +62,19 @@ export const SignUpModal: React.FC = () => {
   const [nidFile, setNidFile] = useState<File | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (signupOpen) {
+      setMode(signupMode);
+      setSuccessInfo(null);
+      setNotice(null);
+    }
+  }, [signupOpen, signupMode]);
+
+  const handleClose = () => {
+    setSuccessInfo(null);
+    closeSignup();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +94,15 @@ export const SignUpModal: React.FC = () => {
         console.info('[dorymo] logged in:', data.user?.email);
         setConfirmPassword('');
         await refreshProfile();
+        const myProfile = await fetchMyProfile();
         showToast('স্বাগতম ফিরে!', 'success');
-        closeSignup();
+        setSuccessInfo({
+          type: 'login',
+          email: data.user?.email || email,
+          name: myProfile?.full_name || data.user?.user_metadata?.full_name || email.split('@')[0],
+          role: myProfile?.role || 'customer',
+          status: myProfile?.account_status || 'APPROVED',
+        });
       } else {
         if (password !== confirmPassword) {
           showToast('পাসওয়ার্ড দুটি মিলছে না।', 'error');
@@ -88,8 +119,23 @@ export const SignUpModal: React.FC = () => {
         if (!result) return;
         if (result.needsConfirmation) {
           setNotice('ইমেইল যাচাইকরণ চালু আছে — ইনবক্সে পাঠানো লিংকে ক্লিক করে লগইন করুন।');
+          setSuccessInfo({
+            type: 'signup',
+            email,
+            name,
+            role,
+            status: 'PENDING_CONFIRMATION',
+          });
         } else {
-          closeSignup();
+          await refreshProfile();
+          const myProfile = await fetchMyProfile();
+          setSuccessInfo({
+            type: 'signup',
+            email,
+            name: myProfile?.full_name || name,
+            role: myProfile?.role || role,
+            status: myProfile?.account_status || (role === 'customer' ? 'APPROVED' : 'PENDING'),
+          });
         }
       }
     } catch (err: any) {
@@ -112,35 +158,175 @@ export const SignUpModal: React.FC = () => {
   return (
     <Modal
       open={signupOpen}
-      onClose={closeSignup}
+      onClose={handleClose}
       size="md"
-      title={mode === 'signup' ? 'dorymo-তে যোগ দিন' : 'স্বাগতম ফিরে'}
+      title={
+        successInfo
+          ? successInfo.type === 'login'
+            ? 'লগইন সফল হয়েছে · Login Successful'
+            : 'অ্যাকাউন্ট তৈরি হয়েছে · Sign Up Successful'
+          : mode === 'signup'
+          ? 'dorymo-তে যোগ দিন'
+          : 'স্বাগতম ফিরে'
+      }
       description={
-        mode === 'signup'
+        successInfo
+          ? 'আপনার অ্যাকাউন্ট বিবরণ ও নিয়ন্ত্রণ নিচে দেওয়া হলো।'
+          : mode === 'signup'
           ? role === 'customer'
             ? 'নাম, ইমেইল ও ফোন দিলেই অ্যাকাউন্ট তৈরি — কোনো অপেক্ষা নেই।'
             : 'NID দিয়ে যোগ দিন। আমি যাচাই করে অনুমোদন করলে কাজ পাবেন।'
           : 'আপনার ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।'
       }
     >
-      {/* mode switch */}
-      <div className="mb-5 flex rounded-xl border border-white/10 bg-zinc-950/60 p-1">
-        {(['signup', 'login'] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => { setMode(m); setNotice(null); }}
-            className={cn(
-              'flex-1 rounded-lg py-2 text-[13px] font-medium transition-colors',
-              mode === m ? 'bg-orange-500 text-black' : 'text-zinc-400 hover:text-white'
-            )}
-          >
-            {m === 'signup' ? 'নতুন অ্যাকাউন্ট · Sign up' : 'লগইন · Log in'}
-          </button>
-        ))}
-      </div>
+      {successInfo ? (
+        <div className="py-2 text-center animate-fade-in">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 ring-8 ring-emerald-500/10">
+            <CheckCircle2 className="h-8 w-8" />
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+          <h3 className="mt-4 font-display text-xl text-white">
+            {successInfo.type === 'login' ? 'স্বাগতম ফিরে!' : 'স্বাগতম dorymo-তে!'}
+          </h3>
+          <p className="mt-1 text-sm text-zinc-400">
+            {successInfo.name ? <span className="font-medium text-zinc-200">{successInfo.name}</span> : null}
+            {successInfo.name ? ' · ' : ''}
+            <span className="text-zinc-400">{successInfo.email}</span>
+          </p>
+
+          <div className="mt-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-4 text-left">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+              <span className="text-[12px] text-zinc-400">ভূমিকা · Current Role</span>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-semibold',
+                  successInfo.role === 'admin'
+                    ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+                    : successInfo.role === 'provider'
+                    ? 'border border-sky-500/30 bg-sky-500/15 text-sky-300'
+                    : 'border border-orange-500/30 bg-orange-500/15 text-orange-300'
+                )}
+              >
+                {successInfo.role === 'admin' && '👑 Founder / অ্যাডমিন'}
+                {successInfo.role === 'provider' && '🛠️ প্রোভাইডার · Provider'}
+                {successInfo.role === 'customer' && '👤 গ্রাহক · Customer'}
+              </span>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-[12px] text-zinc-400">অ্যাকাউন্ট স্ট্যাটাস · Status</span>
+              <span
+                className={cn(
+                  'text-[12px] font-medium',
+                  successInfo.status === 'APPROVED' ? 'text-emerald-400' : 'text-amber-400'
+                )}
+              >
+                {successInfo.status === 'APPROVED'
+                  ? '● সক্রিয় / অনুমোদিত · Active'
+                  : successInfo.status === 'PENDING_CONFIRMATION'
+                  ? '○ ইমেইল নিশ্চিতকরণ প্রয়োজন'
+                  : '⏳ NID অনুমোদন অপেক্ষমাণ · Pending Review'}
+              </span>
+            </div>
+
+            {successInfo.role === 'admin' && (
+              <div className="mt-4 rounded-xl border border-emerald-500/25 bg-emerald-950/40 p-3 text-[12px] text-emerald-200">
+                <p className="flex items-center gap-1.5 font-semibold">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  Founder Console অ্যাক্সেস সক্রিয়
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-emerald-300/80">
+                  আপনি এখন প্ল্যাটফর্মের সকল কাস্টমার পেমেন্ট যাচাই এবং প্রোভাইডার কেওয়াইসি অনুমোদন করতে পারবেন।
+                </p>
+              </div>
+            )}
+
+            {successInfo.role === 'provider' && successInfo.status !== 'APPROVED' && (
+              <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-950/40 p-3 text-[12px] text-amber-200">
+                <p className="flex items-center gap-1.5 font-semibold">
+                  <Clock className="h-4 w-4 text-amber-400" />
+                  NID যাচাই প্রক্রিয়াধীন
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-amber-300/80">
+                  অ্যাডমিন আপনার NID যাচাই করে অনুমোদন দিলে সাথে সাথে কাজ গ্রহণ করতে পারবেন।
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex flex-col gap-2">
+            {successInfo.role === 'admin' && (
+              <Button
+                size="lg"
+                fullWidth
+                onClick={() => {
+                  handleClose();
+                  goAdmin();
+                }}
+                className="bg-emerald-500 font-semibold text-black hover:bg-emerald-400"
+              >
+                <ShieldCheck className="mr-1.5 h-4 w-4" /> Founder Console-এ যান · Go to Admin Panel
+              </Button>
+            )}
+
+            {successInfo.role === 'provider' && (
+              <Button
+                size="lg"
+                fullWidth
+                onClick={() => {
+                  handleClose();
+                  goProviderJobs();
+                }}
+              >
+                কাজ দেখুন · View Jobs
+              </Button>
+            )}
+
+            {successInfo.role === 'customer' && (
+              <Button
+                size="lg"
+                fullWidth
+                onClick={() => {
+                  handleClose();
+                  goExplore();
+                }}
+              >
+                সেবা খুঁজুন · Explore Services
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => {
+                handleClose();
+                goHome();
+              }}
+            >
+              হোমপেজে যান · Continue to Homepage
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* mode switch */}
+          <div className="mb-5 flex rounded-xl border border-white/10 bg-zinc-950/60 p-1">
+            {(['signup', 'login'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setMode(m); setNotice(null); }}
+                className={cn(
+                  'flex-1 rounded-lg py-2 text-[13px] font-medium transition-colors',
+                  mode === m ? 'bg-orange-500 text-black' : 'text-zinc-400 hover:text-white'
+                )}
+              >
+                {m === 'signup' ? 'নতুন অ্যাকাউন্ট · Sign up' : 'লগইন · Log in'}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
         {mode === 'signup' && (
           <>
             {/* Role cards */}
@@ -344,6 +530,8 @@ export const SignUpModal: React.FC = () => {
           </p>
         )}
       </form>
+      </>
+      )}
     </Modal>
   );
 };

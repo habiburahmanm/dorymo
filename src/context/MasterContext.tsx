@@ -99,7 +99,9 @@ interface MasterContextType {
   realtimeConnected: boolean;
 
   signupOpen: boolean;
-  openSignup: () => void;
+  signupMode: 'login' | 'signup';
+  openSignup: (mode?: 'login' | 'signup' | unknown) => void;
+  openLogin: () => void;
   closeSignup: () => void;
   avatarOpen: boolean;
   openAvatar: () => void;
@@ -138,6 +140,7 @@ export const MasterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [adminLoading, setAdminLoading] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [signupOpen, setSignupOpen] = useState(false);
+  const [signupMode, setSignupMode] = useState<'login' | 'signup'>('signup');
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [preselectedServiceId, setPreselectedService] = useState<string | null>(null);
   const [focusOrderId, setFocusOrderId] = useState<string | null>(null);
@@ -424,7 +427,19 @@ export const MasterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       markAllRead,
       realtimeConnected,
       signupOpen,
-      openSignup: () => setSignupOpen(true),
+      signupMode,
+      openSignup: (mode?: unknown) => {
+        if (mode === 'login' || mode === 'signup') {
+          setSignupMode(mode);
+        } else {
+          setSignupMode('signup');
+        }
+        setSignupOpen(true);
+      },
+      openLogin: () => {
+        setSignupMode('login');
+        setSignupOpen(true);
+      },
       closeSignup: () => setSignupOpen(false),
       avatarOpen,
       openAvatar: () => setAvatarOpen(true),
@@ -437,7 +452,7 @@ export const MasterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       focusOrderId, profile, loadProfile, register, pendingPayments, pendingProviders,
       payouts, payProvider, refundDeposit, adminLoading, refreshAdmin, submitPayment, verify, decideProvider, toast,
       showToast, clearToast, notifications, unreadCount, markRead, markAllRead,
-      realtimeConnected, signupOpen, avatarOpen, preselectedServiceId,
+      realtimeConnected, signupOpen, signupMode, avatarOpen, preselectedServiceId,
     ]
   );
 

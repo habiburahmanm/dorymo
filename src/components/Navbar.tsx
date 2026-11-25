@@ -249,8 +249,8 @@ export const Navbar: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button onClick={openSignup} className="h-9 rounded-lg px-3 text-[13px] font-medium text-zinc-300 hover:text-white">লগইন</button>
-              <Button size="sm" onClick={openSignup}>শুরু করুন</Button>
+              <button onClick={() => openSignup('login')} className="h-9 rounded-lg px-3 text-[13px] font-medium text-zinc-300 hover:text-white">লগইন · Log in</button>
+              <Button size="sm" onClick={() => openSignup('signup')}>শুরু করুন</Button>
             </div>
           )}
         </div>
@@ -328,8 +328,8 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <div className="flex gap-2">
-                <Button variant="outline" fullWidth onClick={() => { close(); openSignup(); }}>লগইন</Button>
-                <Button fullWidth onClick={() => { close(); openSignup(); }}>প্রোভাইডার</Button>
+                <Button variant="outline" fullWidth onClick={() => { close(); openSignup('login'); }}>লগইন · Log in</Button>
+                <Button fullWidth onClick={() => { close(); openSignup('signup'); }}>প্রোভাইডার</Button>
               </div>
             )}
           </div>

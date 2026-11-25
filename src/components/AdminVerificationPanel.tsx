@@ -52,6 +52,8 @@ export const AdminVerificationPanel: React.FC = () => {
     clearToast,
     goHome,
     profile,
+    openSignup,
+    refreshProfile,
   } = useMaster();
 
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -83,18 +85,67 @@ export const AdminVerificationPanel: React.FC = () => {
     setBusyId(null);
   };
 
-  if (profile && profile.role !== 'admin') {
+  if (!profile) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
         <Card className="p-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
-            <ShieldCheck className="h-6 w-6" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-400 ring-8 ring-orange-500/5">
+            <ShieldCheck className="h-7 w-7" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-white">Founder only · শুধু অ্যাডমিনের জন্য</h2>
-          <p className="mt-1.5 text-[13px] text-zinc-400">
-            এই কনসোল শুধু প্ল্যাটফর্ম মালিকের জন্য। আপনার ভূমিকা: {profile.role}
+          <h2 className="mt-4 font-display text-xl text-white">Founder Console · অ্যাডমিন লগইন আবশ্যক</h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
+            অ্যাডমিন কনসোলে প্রবেশের জন্য অনুগ্রহ করে প্ল্যাটফর্ম মালিকের অ্যাকাউন্টে লগইন করুন।
           </p>
-          <Button className="mt-5" variant="outline" onClick={goHome}>হোমপেজে যান</Button>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button onClick={() => openSignup('login')}>
+              লগইন করুন · Log In as Founder
+            </Button>
+            <Button variant="outline" onClick={goHome}>
+              হোমপেজে যান
+            </Button>
+          </div>
+          <div className="mt-6 rounded-xl border border-white/10 bg-zinc-950/70 p-4 text-left text-xs">
+            <p className="font-semibold text-zinc-300">💡 Founder Admin করার নিয়ম:</p>
+            <p className="mt-1 text-zinc-400">
+              যেকোনো অ্যাকাউন্টে সাইন আপ করার পর Supabase Dashboard-এর SQL Editor-এ গিয়ে চালান:
+            </p>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-zinc-900 p-2.5 font-mono text-[11px] text-orange-300">
+{`UPDATE public.users\nSET role = 'admin', account_status = 'APPROVED'\nWHERE email = 'your-email@example.com';`}
+            </pre>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (profile.role !== 'admin') {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
+        <Card className="p-8 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-400 ring-8 ring-red-500/5">
+            <ShieldCheck className="h-7 w-7" />
+          </div>
+          <h2 className="mt-4 font-display text-xl text-white">Founder Only · শুধু অ্যাডমিনের জন্য</h2>
+          <p className="mt-2 text-[13px] text-zinc-400">
+            এই কনসোল শুধু প্ল্যাটফর্ম মালিকের জন্য। আপনার বর্তমান ভূমিকা: <span className="font-semibold text-orange-400">{profile.role}</span> ({profile.email})
+          </p>
+          <div className="mt-5 rounded-xl border border-white/10 bg-zinc-950/70 p-4 text-left text-xs">
+            <p className="font-semibold text-zinc-300">💡 এই অ্যাকাউন্টকে Founder Admin বানাতে:</p>
+            <p className="mt-1 text-zinc-400">
+              আপনার Supabase SQL Editor-এ এই কোডটি পেস্ট করে Run করুন:
+            </p>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-zinc-900 p-2.5 font-mono text-[11px] text-orange-300">
+{`UPDATE public.users\nSET role = 'admin', account_status = 'APPROVED'\nWHERE email = '${profile.email}';`}
+            </pre>
+          </div>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button onClick={() => void refreshProfile()}>
+              🔄 রোল রিফ্রেশ করুন · Check Again
+            </Button>
+            <Button variant="outline" onClick={goHome}>
+              হোমপেজে যান
+            </Button>
+          </div>
         </Card>
       </div>
     );
